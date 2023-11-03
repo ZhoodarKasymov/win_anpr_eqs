@@ -18,12 +18,16 @@ namespace WinAnprSqe
             InitializeComponent();
             
             var apiUrl = ConfigurationManager.AppSettings["ApiUrl"];
-            var printerName = ConfigurationManager.AppSettings["PrinterName"];
             
             _apiServer = new ApiServer(apiUrl, this);
             _apiServer.Start();
             
-            PrinterHelper.PrinterName = printerName;
+            PrinterHelper.PrinterName = ConfigurationManager.AppSettings["PrinterName"];
+            PrinterHelper.PhoneNumber = ConfigurationManager.AppSettings["PhoneNumber"];
+            PrinterHelper.Text1 = ConfigurationManager.AppSettings["Text1"];
+            PrinterHelper.Text2 = ConfigurationManager.AppSettings["Text2"];
+            PrinterHelper.Text3 = ConfigurationManager.AppSettings["Text3"];
+            PrinterHelper.Text4 = ConfigurationManager.AppSettings["Text4"];
             
             DataGridMonitor.DataSource = Cars;
             
@@ -48,9 +52,9 @@ namespace WinAnprSqe
             PrinterHelper.NewCar = new CarInlineViewModel
             {
                 ServiceName = "Test service",
-                LicensePlate = "01KG000AAA",
+                LicensePlate = "01KG000AA",
                 Date = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
-                Talon = $"A1"
+                Talon = "A10"
             };
             
             PrinterHelper.Print();

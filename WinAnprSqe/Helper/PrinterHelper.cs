@@ -9,6 +9,11 @@ namespace WinAnprSqe.Helper
     {
         public static CarInlineViewModel NewCar;
         public static string PrinterName;
+        public static string PhoneNumber = string.Empty;
+        public static string Text1 = string.Empty;
+        public static string Text2 = string.Empty;
+        public static string Text3 = string.Empty;
+        public static string Text4 = string.Empty;
         
         public static void Print()
         {
@@ -27,92 +32,120 @@ namespace WinAnprSqe.Helper
             if(NewCar == null) return;
             
             var g = e.Graphics;
-            var regularFont = new Font("Arial", 8);
-            var boldFont = new Font("Arial", 9, FontStyle.Bold);
+            var leading = 4;
+            float lineHeight;
+
+            using (var font14 = new Font("Courier New", 14))
+            {
+                lineHeight = font14.GetHeight() + leading;
+            }
+
+            float startX = 0;
+            float startY = leading;
+            float offset = 0;
+
+            var formatLeft = new StringFormat(StringFormatFlags.NoClip);
+            var formatCenter = new StringFormat(formatLeft);
+            var formatRight = new StringFormat(formatLeft);
+
+            formatCenter.Alignment = StringAlignment.Center;
+            formatRight.Alignment = StringAlignment.Far;
+            formatLeft.Alignment = StringAlignment.Near;
+
+            var layoutSize = new SizeF(280.0f - offset * 2, lineHeight);
             
-            var logo = Image.FromFile("logo.png");
-            
-            var receiptContent = "\u226aКыргызкөмур\u226b \n" +
-                                    "мамлекеттик ишканасы\n" +
+            var receiptContent = $"\u226a{Text1}\u226b \n" +
+                                    $"{Text2}\n" +
                                     "Кезектик номурунуз\n" +
                                     $"{NewCar.Talon}\n" +
                                     $"{NewCar.LicensePlate}\n" +
-                                    $"\u25d4 {DateTime.Now.ToString("HH:mm")}\n" +
-                                    "------------------------------------------------------------\n" +
+                                    $"{DateTime.Now.ToString("HH:mm")}\n" +
+                                    "".PadRight(64,'-') + "\n" +
                                     "СУРАНЫЧ\n" +
-                                    "Кезектик тартипти сактап чакыруу\nменен кириңиз\n" +
-                                    "------------------------------------------------------------\n" +
+                                    $"{Text3}\n" +
+                                    "".PadRight(64,'-') + "\n" +
                                     $"Талон берилди {DateTime.Now.ToString("dd/MM/yyyy")} жыл\n" + 
-                                    "Электрондук кезек бузуу учурунда кубө болсоңуз \nтөмөнку номерге кабарлаңыз\n" +
-                                    "\u2706 0312 055 350";
+                                    $"{Text4}\n" +
+                                    "\u2706 " + PhoneNumber;
 
-            var topMargin = 5;
-
-            var yPos = topMargin + 20;
             var lines = receiptContent.Split('\n');
             var lineCount = 1;
             
-            // Print the logo
-            g.DrawImage(logo, topMargin + 40, yPos - 8, 25, 25);
+            // Calculate the center position
+            var paperWidth = e.PageSettings.PaperSize.Width;
+            var centerPos = (paperWidth - e.MarginBounds.Width) / 2;
+            
+            centerPos -= 50;
+
+            using (var logo = Image.FromFile("logo.png"))
+            {
+                // Print the logo
+                g.DrawImage(logo, centerPos + 75, 0, 25, 25);
+            }
+
+            var bold10 = new Font("Arial", 10, FontStyle.Bold);
+            var bold30 = new Font("Arial", 30, FontStyle.Bold);
+            var bold15 = new Font("Arial", 15, FontStyle.Bold);
+            var bold18 = new Font("Arial", 8, FontStyle.Bold);
+            var regular9 = new Font("Arial", 9, FontStyle.Regular);
             
             foreach (var line in lines)
             {
-                yPos += 17;
+                offset += lineHeight;
+                var layout = new RectangleF(new PointF(startX, startY + offset), layoutSize);
                 
                 switch (lineCount)
                 {
                     case 1:
-                        g.DrawString(line, new Font("Arial", 6, FontStyle.Bold), Brushes.Black, topMargin + 15, yPos);
+                        g.DrawString(line, bold10, Brushes.Black, layout, formatCenter);
                         break;
                     case 2:
-                        g.DrawString(line, new Font("Arial", 6, FontStyle.Bold), Brushes.Black, topMargin + 8, yPos - 10);
+                        g.DrawString(line, bold10, Brushes.Black, layout, formatCenter);
                         break;
                     case 3:
-                        g.DrawString(line, new Font("Arial", 6, FontStyle.Bold), Brushes.Black, topMargin + 9, yPos);
+                        g.DrawString(line, bold10, Brushes.Black, layout, formatCenter);
                         break;
                     case 4:
-                        g.DrawString(line, new Font("Arial", 28, FontStyle.Bold), Brushes.Black, topMargin + 23, yPos + 2);
+                        g.DrawString(line, bold30, Brushes.Black, layout, formatCenter);
+                        offset += 16;
                         break;
                     case 5:
-                        g.DrawString(line, new Font("Arial", 8, FontStyle.Bold), Brushes.Black, topMargin + 17, yPos + 25);
+                        g.DrawString(line, bold15, Brushes.Black, layout, formatCenter);
                         break;
                     case 6:
-                        g.DrawString(line, new Font("Arial", 7, FontStyle.Bold), Brushes.Black, topMargin + 30, yPos + 20);
-                        break;
-                    case 12:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Bold), Brushes.Black, topMargin + 15, yPos - 5);
-                        break;
-                    case 13:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Bold), Brushes.Black, topMargin, yPos);
-                        break;
-                    case 14:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Bold), Brushes.Black, topMargin + 15, yPos);
-                        break;
-                    case 8:
-                        g.DrawString(line, new Font("Arial", 6, FontStyle.Bold), Brushes.Black, topMargin + 25, yPos + 5);
-                        break;
-                    case 10:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Bold), Brushes.Black, topMargin + 21, yPos - 13);
-                        break;
-                    case 9:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Bold), Brushes.Black, topMargin, yPos - 3);
+                        g.DrawString(line, bold15, Brushes.Black, layout, formatCenter);
                         break;
                     case 11:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Regular), Brushes.Black, topMargin, yPos - 20);
+                        g.DrawString(line, bold18, Brushes.Black, layout, formatCenter);
                         break;
-                    case 15:
-                        g.DrawString(line, new Font("Arial", 6, FontStyle.Regular), Brushes.Black, topMargin + 23, yPos + 5);
+                    case 12:
+                        g.DrawString(line, bold18, Brushes.Black, layout, formatCenter);
+                        break;
+                    case 8:
+                        g.DrawString(line, bold10, Brushes.Black, layout, formatCenter);
+                        break;
+                    case 9:
+                        g.DrawString(line, bold18, Brushes.Black, layout, formatCenter);
+                        break;
+                    case 10:
+                        g.DrawString(line, regular9, Brushes.Black, layout, formatCenter);
+                        break;
+                    case 13:
+                        g.DrawString(line, bold10, Brushes.Black, layout, formatCenter);
                         break;
                     case 7:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Regular), Brushes.Black, topMargin, yPos + 15);
+                        g.DrawString(line, regular9, Brushes.Black, layout, formatCenter);
                         break;
                     default:
-                        g.DrawString(line, new Font("Arial", 5, FontStyle.Regular), Brushes.Black, topMargin, yPos + 10);
+                        g.DrawString(line, bold18, Brushes.Black, layout, formatCenter);
                         break;
                 }
-
+            
                 lineCount++;
             }
+            
+            bold10.Dispose(); bold15.Dispose(); bold30.Dispose(); 
+            bold18.Dispose(); regular9.Dispose();
 
             e.HasMorePages = false;
         }

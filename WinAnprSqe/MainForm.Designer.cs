@@ -84,7 +84,9 @@
             this.Controls.Add(this.DataGridMonitor);
             this.Controls.Add(this.button_print);
             this.Cursor = System.Windows.Forms.Cursors.Default;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Мониторинг за добавленными авто-машинами";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.TableAnpr_FormClosed);

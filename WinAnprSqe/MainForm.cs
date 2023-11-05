@@ -21,7 +21,8 @@ namespace WinAnprSqe
             
             _apiServer = new ApiServer(apiUrl, this);
             _apiServer.Start();
-            
+
+            Text = ConfigurationManager.AppSettings["WindowTitle"];
             PrinterHelper.PrinterName = ConfigurationManager.AppSettings["PrinterName"];
             PrinterHelper.PhoneNumber = ConfigurationManager.AppSettings["PhoneNumber"];
             PrinterHelper.Text1 = ConfigurationManager.AppSettings["Text1"];

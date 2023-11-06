@@ -66,7 +66,7 @@ namespace WinAnprSqe.Helper
                                     "".PadRight(64,'-') + "\n" +
                                     $"Талон берилди {DateTime.Now.ToString("dd/MM/yyyy")} жыл\n" + 
                                     $"{Text4}\n" +
-                                    "\u2706 " + PhoneNumber;
+                                    "\u2706" + PhoneNumber;
 
             var lines = receiptContent.Split('\n');
             var lineCount = 1;

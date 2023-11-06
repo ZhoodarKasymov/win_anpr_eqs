@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -20,7 +21,7 @@ namespace WinAnprSqe.Server
     {
         private readonly HttpListener _httpListener;
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        
+
         private static EventNotificationAlert _notificationAlert;
         private MainForm _mainForm;
 
@@ -71,21 +72,47 @@ namespace WinAnprSqe.Server
 
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/inline")
             {
+                var isTest = Convert.ToBoolean(ConfigurationManager.AppSettings["IsTest"]);
+
+                if (isTest)
+                {
+                    var newCar1 = new CarInlineViewModel
+                    {
+                        ServiceName = "Test service",
+                        LicensePlate = "1KG123AAA",
+                        Date = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                        Talon = "A1"
+                    };
+
+                    if (_mainForm.InvokeRequired)
+                    {
+                        _mainForm.Invoke(new Action(() => AddCarToQueue(newCar1)));
+                    }
+                    else
+                    {
+                        AddCarToQueue(newCar1);
+                    }
+
+                    ResponseClose(response, "OK");
+                    return;
+                }
+
                 if (_notificationAlert is null)
                 {
                     ResponseClose(response, "Номеров нету, на очередь!");
                     return;
                 }
-                
+
                 var serviceId = ConfigurationManager.AppSettings["ServiceId"];
                 var serverUrl = ConfigurationManager.AppSettings["ServerUrl"];
                 var requestUri = new Uri(serverUrl);
-                
+
                 using (var httpClient = new HttpClient())
                 {
                     // Define the request content as JSON
                     var content = new StringContent(
-                        "{\"jsonrpc\": \"2.0\", \"method\": \"Поставить в очередь\", \"params\": {\"service_id\": \"" + serviceId +
+                        "{\"jsonrpc\": \"2.0\", \"method\": \"Поставить в очередь\", \"params\": {\"service_id\": \"" +
+                        serviceId +
                         "\", \"text_data\": \"" + _notificationAlert.LicensePlate + "\"}}",
                         Encoding.UTF8,
                         "application/json"
@@ -110,15 +137,15 @@ namespace WinAnprSqe.Server
 
                         if (_mainForm.InvokeRequired)
                         {
-                            _mainForm.Invoke(new Action(() => _mainForm?.Cars.Insert(0, newCar)));
+                            _mainForm.Invoke(new Action(() => AddCarToQueue(newCar)));
                         }
                         else
                         {
-                            _mainForm?.Cars.Insert(0, newCar);
+                            AddCarToQueue(newCar);
                         }
-                        
+
                         _notificationAlert = null;
-                        
+
                         // Print talon for driver in queue
                         PrinterHelper.NewCar = newCar;
                         PrinterHelper.Print();
@@ -128,6 +155,7 @@ namespace WinAnprSqe.Server
                 ResponseClose(response, "OK");
                 return;
             }
+
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/anpr/event")
             {
                 Logger.Info("Запрос от камеры пришел!");
@@ -137,7 +165,7 @@ namespace WinAnprSqe.Server
                     ResponseClose(response, "Нету xml документа!");
                     return;
                 }
-                
+
                 try
                 {
                     var xdoc = XDocument.Parse(xmlData);
@@ -169,11 +197,11 @@ namespace WinAnprSqe.Server
                 {
                     Logger.Error("Error parsing XML: " + ex.Message);
                 }
-                
+
                 ResponseClose(response, "OK");
             }
         }
-        
+
         #region Private Methods
 
         private bool MultipartRequestIsValid(HttpListenerRequest request, out string xmlData)
@@ -181,7 +209,7 @@ namespace WinAnprSqe.Server
             if (request.HasEntityBody)
             {
                 var parser = MultipartFormDataParser.Parse(request.InputStream);
-                
+
                 var formFile = parser.Files.First();
 
                 using (var reader = new StreamReader(formFile.Data))
@@ -202,6 +230,14 @@ namespace WinAnprSqe.Server
             response.ContentLength64 = buffer.Length;
             response.OutputStream.Write(buffer, 0, buffer.Length);
             response.Close();
+        }
+
+        private void AddCarToQueue(CarInlineViewModel newCar)
+        {
+            _mainForm?.Cars.Insert(0, newCar);
+
+            if (_mainForm?.Cars != null && _mainForm?.Cars.Count > 50)
+                _mainForm.Cars.RemoveAt(_mainForm.Cars.Count - 1);
         }
 
         #endregion

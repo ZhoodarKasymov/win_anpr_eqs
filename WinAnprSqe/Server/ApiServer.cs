@@ -24,12 +24,14 @@ namespace WinAnprSqe.Server
 
         private static EventNotificationAlert _notificationAlert;
         private MainForm _mainForm;
+        private bool _isStd;
 
-        public ApiServer(string prefix, MainForm mainForm)
+        public ApiServer(string prefix, MainForm mainForm, bool isStd)
         {
             _httpListener = new HttpListener();
             _httpListener.Prefixes.Add(prefix);
             _mainForm = mainForm;
+            _isStd = isStd;
         }
 
         public void Start()
@@ -103,7 +105,10 @@ namespace WinAnprSqe.Server
                     return;
                 }
 
-                var serviceId = ConfigurationManager.AppSettings["ServiceId"];
+                var serviceId = _isStd 
+                    ? ConfigurationManager.AppSettings["ServiceIdStd"] 
+                    : ConfigurationManager.AppSettings["ServiceIdTec"];
+                
                 var serverUrl = ConfigurationManager.AppSettings["ServerUrl"];
                 var requestUri = new Uri(serverUrl);
 
@@ -234,10 +239,20 @@ namespace WinAnprSqe.Server
 
         private void AddCarToQueue(CarInlineViewModel newCar)
         {
-            _mainForm?.Cars.Insert(0, newCar);
+            if (_isStd)
+            {
+                _mainForm?.CarsStandart.Insert(0, newCar);
 
-            if (_mainForm?.Cars != null && _mainForm?.Cars.Count > 50)
-                _mainForm.Cars.RemoveAt(_mainForm.Cars.Count - 1);
+                if (_mainForm?.CarsStandart != null && _mainForm?.CarsStandart.Count > 50)
+                    _mainForm.CarsStandart.RemoveAt(_mainForm.CarsStandart.Count - 1);
+            }
+            else
+            {
+                _mainForm?.CarsTec.Insert(0, newCar);
+
+                if (_mainForm?.CarsTec != null && _mainForm?.CarsTec.Count > 50)
+                    _mainForm.CarsTec.RemoveAt(_mainForm.CarsTec.Count - 1);
+            }
         }
 
         #endregion

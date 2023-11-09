@@ -10,17 +10,23 @@ namespace WinAnprSqe
 {
     public partial class MainForm : Form
     {
-        private readonly ApiServer _apiServer;
-        public BindingList<CarInlineViewModel> Cars = new BindingList<CarInlineViewModel>();
+        private readonly ApiServer _apiServerStandart;
+        private readonly ApiServer _apiServerTec;
+        public BindingList<CarInlineViewModel> CarsStandart = new BindingList<CarInlineViewModel>();
+        public BindingList<CarInlineViewModel> CarsTec = new BindingList<CarInlineViewModel>();
 
         public MainForm()
         {
             InitializeComponent();
             
-            var apiUrl = ConfigurationManager.AppSettings["ApiUrl"];
+            var apiUrlStd = ConfigurationManager.AppSettings["ApiUrlStandart"];
+            var apiUrlTec = ConfigurationManager.AppSettings["ApiUrlTec"];
             
-            _apiServer = new ApiServer(apiUrl, this);
-            _apiServer.Start();
+            _apiServerStandart = new ApiServer(apiUrlStd, this, true);
+            _apiServerStandart.Start();
+
+            _apiServerTec = new ApiServer(apiUrlTec, this, false);
+            _apiServerTec.Start();
 
             Text = ConfigurationManager.AppSettings["WindowTitle"];
             PrinterHelper.PrinterName = ConfigurationManager.AppSettings["PrinterName"];
@@ -30,8 +36,10 @@ namespace WinAnprSqe
             PrinterHelper.Text3 = ConfigurationManager.AppSettings["Text3"];
             PrinterHelper.Text4 = ConfigurationManager.AppSettings["Text4"];
             
-            DataGridMonitor.DataSource = Cars;
+            DataGridMonitor.DataSource = CarsStandart;
+            dataGridViewTec.DataSource = CarsTec;
             
+            // Standart Table
             DataGridMonitor.Columns["ServiceName"].HeaderText = "Услуга";
             DataGridMonitor.Columns["LicensePlate"].HeaderText = "Номер машины";
             DataGridMonitor.Columns["Talon"].HeaderText = "Талон";
@@ -41,11 +49,23 @@ namespace WinAnprSqe
             DataGridMonitor.Columns["LicensePlate"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             DataGridMonitor.Columns["Talon"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             DataGridMonitor.Columns["Date"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            
+            // VIP Table (TEC)
+            dataGridViewTec.Columns["ServiceName"].HeaderText = "Услуга";
+            dataGridViewTec.Columns["LicensePlate"].HeaderText = "Номер машины";
+            dataGridViewTec.Columns["Talon"].HeaderText = "Талон";
+            dataGridViewTec.Columns["Date"].HeaderText = "Дата";
+            
+            dataGridViewTec.Columns["ServiceName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewTec.Columns["LicensePlate"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewTec.Columns["Talon"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewTec.Columns["Date"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
 
         private void TableAnpr_FormClosed(object sender, FormClosedEventArgs e)
         {
-            _apiServer.Stop();
+            _apiServerStandart.Stop();
+            _apiServerTec.Stop();
         }
 
         private void button_print_Click(object sender, EventArgs e)

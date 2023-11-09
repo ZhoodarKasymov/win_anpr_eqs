@@ -33,7 +33,10 @@
             this.button_print = new System.Windows.Forms.Button();
             this.DataGridMonitor = new System.Windows.Forms.DataGridView();
             this.label1 = new System.Windows.Forms.Label();
+            this.dataGridViewTec = new System.Windows.Forms.DataGridView();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.DataGridMonitor)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewTec)).BeginInit();
             this.SuspendLayout();
             // 
             // button_print
@@ -41,7 +44,7 @@
             this.button_print.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
             this.button_print.DialogResult = System.Windows.Forms.DialogResult.No;
             this.button_print.ForeColor = System.Drawing.Color.DarkSlateGray;
-            this.button_print.Location = new System.Drawing.Point(654, 12);
+            this.button_print.Location = new System.Drawing.Point(719, 28);
             this.button_print.Name = "button_print";
             this.button_print.Size = new System.Drawing.Size(114, 23);
             this.button_print.TabIndex = 0;
@@ -58,18 +61,40 @@
             this.DataGridMonitor.Location = new System.Drawing.Point(12, 93);
             this.DataGridMonitor.Name = "DataGridMonitor";
             this.DataGridMonitor.ReadOnly = true;
-            this.DataGridMonitor.Size = new System.Drawing.Size(756, 322);
+            this.DataGridMonitor.Size = new System.Drawing.Size(756, 544);
             this.DataGridMonitor.TabIndex = 1;
             // 
             // label1
             // 
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.label1.Location = new System.Drawing.Point(190, 29);
+            this.label1.Location = new System.Drawing.Point(184, 24);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(344, 52);
+            this.label1.Size = new System.Drawing.Size(332, 56);
             this.label1.TabIndex = 2;
-            this.label1.Text = "Мониторинг добавленных авто-номеров\r\n";
+            this.label1.Text = "Мониторинг добавленных авто-номеров (Cтандартный) \r\n";
             this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // dataGridViewTec
+            // 
+            this.dataGridViewTec.AllowUserToAddRows = false;
+            this.dataGridViewTec.AllowUserToDeleteRows = false;
+            this.dataGridViewTec.BackgroundColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.dataGridViewTec.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewTec.Location = new System.Drawing.Point(783, 93);
+            this.dataGridViewTec.Name = "dataGridViewTec";
+            this.dataGridViewTec.ReadOnly = true;
+            this.dataGridViewTec.Size = new System.Drawing.Size(798, 544);
+            this.dataGridViewTec.TabIndex = 3;
+            // 
+            // label2
+            // 
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.label2.Location = new System.Drawing.Point(1012, 24);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(314, 56);
+            this.label2.TabIndex = 4;
+            this.label2.Text = "Мониторинг добавленных авто-номеров (ТЭЦ) \r\n";
+            this.label2.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // MainForm
             // 
@@ -79,7 +104,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.ClientSize = new System.Drawing.Size(780, 434);
+            this.ClientSize = new System.Drawing.Size(1593, 649);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.dataGridViewTec);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.DataGridMonitor);
             this.Controls.Add(this.button_print);
@@ -91,8 +118,13 @@
             this.Text = "Мониторинг за добавленными авто-машинами";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.TableAnpr_FormClosed);
             ((System.ComponentModel.ISupportInitialize)(this.DataGridMonitor)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewTec)).EndInit();
             this.ResumeLayout(false);
         }
+
+        private System.Windows.Forms.Label label2;
+
+        private System.Windows.Forms.DataGridView dataGridViewTec;
 
         private System.Windows.Forms.Label label1;
 

@@ -74,11 +74,13 @@ namespace WinAnprSqe.Server
 
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/inline")
             {
+                Logger.Info($"Кнопка нажата IP: {_httpListener.Prefixes.First()}!");
+                
                 var isTest = Convert.ToBoolean(ConfigurationManager.AppSettings["IsTest"]);
 
                 if (isTest)
                 {
-                    var newCar1 = new CarInlineViewModel
+                    var testCar = new CarInlineViewModel
                     {
                         ServiceName = "Test service",
                         LicensePlate = "1KG123AAA",
@@ -88,11 +90,11 @@ namespace WinAnprSqe.Server
 
                     if (_mainForm.InvokeRequired)
                     {
-                        _mainForm.Invoke(new Action(() => AddCarToQueue(newCar1)));
+                        _mainForm.Invoke(new Action(() => AddCarToQueue(testCar)));
                     }
                     else
                     {
-                        AddCarToQueue(newCar1);
+                        AddCarToQueue(testCar);
                     }
 
                     ResponseClose(response, "OK");
@@ -102,6 +104,29 @@ namespace WinAnprSqe.Server
                 if (_notificationAlert is null)
                 {
                     ResponseClose(response, "Номеров нету, на очередь!");
+                    return;
+                }
+
+                if (_notificationAlert.LicensePlate is "unknown" && _notificationAlert.DateTime == null)
+                {
+                    var unknownCar = new CarInlineViewModel
+                    {
+                        ServiceName = "-",
+                        LicensePlate = "Авто-номер не распознан",
+                        Date = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                        Talon = "-"
+                    };
+                    
+                    if (_mainForm.InvokeRequired)
+                    {
+                        _mainForm.Invoke(new Action(() => AddCarToQueue(unknownCar)));
+                    }
+                    else
+                    {
+                        AddCarToQueue(unknownCar);
+                    }
+                    
+                    ResponseClose(response, "Авто-номер не распознан");
                     return;
                 }
 
@@ -163,8 +188,6 @@ namespace WinAnprSqe.Server
 
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/anpr/event")
             {
-                Logger.Info("Запрос от камеры пришел!");
-
                 if (!MultipartRequestIsValid(request, out var xmlData))
                 {
                     ResponseClose(response, "Нету xml документа!");
@@ -180,22 +203,24 @@ namespace WinAnprSqe.Server
                     var licensePlate = (string)xdoc.Root.Element("{http://www.hikvision.com/ver20/XMLSchema}ANPR")
                         ?.Element("{http://www.hikvision.com/ver20/XMLSchema}licensePlate");
 
-                    Logger.Info($"Данные из xml: {eventType}, {dateTime}, {licensePlate}");
-
                     if (eventType is "ANPR")
                     {
+                        Logger.Info($"Запрос от камеры пришел IP: {_httpListener.Prefixes.First()}!");
+                        Logger.Info($"Данные из xml: {eventType}, {dateTime}, {licensePlate}");
+                        
                         _notificationAlert = licensePlate is "unknown"
-                            ? null
+                            ? new EventNotificationAlert
+                            {
+                                LicensePlate = licensePlate,
+                                DateTime = null,
+                                EventType = eventType
+                            }
                             : new EventNotificationAlert
                             {
                                 LicensePlate = licensePlate,
                                 DateTime = dateTime,
                                 EventType = eventType
                             };
-                    }
-                    else
-                    {
-                        _notificationAlert = null;
                     }
                 }
                 catch (Exception ex)

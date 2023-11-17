@@ -22,10 +22,10 @@ namespace WinAnprSqe
             var apiUrlStd = ConfigurationManager.AppSettings["ApiUrlStandart"];
             var apiUrlTec = ConfigurationManager.AppSettings["ApiUrlTec"];
             
-            _apiServerStandart = new ApiServer(apiUrlStd, this, true);
+            _apiServerStandart = new ApiServer(apiUrlStd, this);
             _apiServerStandart.Start();
 
-            _apiServerTec = new ApiServer(apiUrlTec, this, false);
+            _apiServerTec = new ApiServer(apiUrlTec, this);
             _apiServerTec.Start();
 
             Text = ConfigurationManager.AppSettings["WindowTitle"];

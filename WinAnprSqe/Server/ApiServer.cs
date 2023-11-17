@@ -22,16 +22,15 @@ namespace WinAnprSqe.Server
         private readonly HttpListener _httpListener;
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private static EventNotificationAlert _notificationAlert;
+        private EventNotificationAlert _notificationAlert;
         private MainForm _mainForm;
-        private bool _isStd;
 
-        public ApiServer(string prefix, MainForm mainForm, bool isStd)
+        public ApiServer(string prefix, MainForm mainForm)
         {
             _httpListener = new HttpListener();
             _httpListener.Prefixes.Add(prefix);
             _mainForm = mainForm;
-            _isStd = isStd;
+            _notificationAlert = null;
         }
 
         public void Start()
@@ -130,7 +129,7 @@ namespace WinAnprSqe.Server
                     return;
                 }
 
-                var serviceId = _isStd 
+                var serviceId = isStandart() 
                     ? ConfigurationManager.AppSettings["ServiceIdStd"] 
                     : ConfigurationManager.AppSettings["ServiceIdTec"];
                 
@@ -188,14 +187,14 @@ namespace WinAnprSqe.Server
 
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/anpr/event")
             {
-                if (!MultipartRequestIsValid(request, out var xmlData))
-                {
-                    ResponseClose(response, "Нету xml документа!");
-                    return;
-                }
-
                 try
                 {
+                    if (!MultipartRequestIsValid(request, out var xmlData))
+                    {
+                        ResponseClose(response, "Нету xml документа!");
+                        return;
+                    }
+                    
                     var xdoc = XDocument.Parse(xmlData);
 
                     var eventType = (string)xdoc.Root.Element("{http://www.hikvision.com/ver20/XMLSchema}eventType");
@@ -236,7 +235,7 @@ namespace WinAnprSqe.Server
 
         private bool MultipartRequestIsValid(HttpListenerRequest request, out string xmlData)
         {
-            if (request.HasEntityBody)
+            if (request != null && request.HasEntityBody)
             {
                 var parser = MultipartFormDataParser.Parse(request.InputStream);
 
@@ -264,7 +263,9 @@ namespace WinAnprSqe.Server
 
         private void AddCarToQueue(CarInlineViewModel newCar)
         {
-            if (_isStd)
+            Logger.Error($"Машина добавлена стандартный - {isStandart()}: {_httpListener.Prefixes.First()}");
+            
+            if (isStandart())
             {
                 _mainForm?.CarsStandart.Insert(0, newCar);
 
@@ -278,6 +279,11 @@ namespace WinAnprSqe.Server
                 if (_mainForm?.CarsTec != null && _mainForm?.CarsTec.Count > 50)
                     _mainForm.CarsTec.RemoveAt(_mainForm.CarsTec.Count - 1);
             }
+        }
+
+        private bool isStandart()
+        {
+            return _httpListener.Prefixes.First() == ConfigurationManager.AppSettings["ApiUrlStandart"];
         }
 
         #endregion

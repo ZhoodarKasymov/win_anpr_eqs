@@ -67,6 +67,45 @@ namespace WinAnprSqe
             _apiServerStandart.Stop();
             _apiServerTec.Stop();
         }
+        
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Scroll:
+                    HandleF1KeyAsync();
+                    return true;
+                case Keys.Pause:
+                    HandleF2KeyAsync();
+                    return true;
+                default:
+                    return base.ProcessCmdKey(ref msg, keyData); // Call base method for unhandled keys
+            }
+        }
+
+        private async void HandleF1KeyAsync()
+        {
+            try
+            {
+                await _apiServerStandart.AddToQueueAsync("Standart", true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void HandleF2KeyAsync()
+        {
+            try
+            {
+                await _apiServerTec.AddToQueueAsync("TEC", false);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void button_print_Click(object sender, EventArgs e)
         {

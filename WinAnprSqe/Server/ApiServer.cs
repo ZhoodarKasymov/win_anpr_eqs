@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Linq;
 using HttpMultipartParser;
 using Newtonsoft.Json;
@@ -66,124 +67,119 @@ namespace WinAnprSqe.Server
             }
         }
 
+        public async Task AddToQueueAsync(string buttonName, bool isStandart)
+        {
+            Logger.Info($"Кнопка нажата: {buttonName}!");
+            var isTest = Convert.ToBoolean(ConfigurationManager.AppSettings["IsTest"]);
+
+            if (isTest)
+            {
+                var testCar = new CarInlineViewModel
+                {
+                    ServiceName = "Test service",
+                    LicensePlate = "1KG123AAA",
+                    Date = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                    Talon = "A1"
+                };
+
+                if (_mainForm.InvokeRequired)
+                {
+                    _mainForm.Invoke(new Action(() => AddCarToQueue(testCar, isStandart)));
+                }
+                else
+                {
+                    AddCarToQueue(testCar, isStandart);
+                }
+
+                return;
+            }
+
+            if (_notificationAlert is null)
+            {
+                MessageBox.Show("Номеров нету, на очередь!");
+                return;
+            }
+
+            if (_notificationAlert.LicensePlate is "unknown" && _notificationAlert.DateTime == null)
+            {
+                var unknownCar = new CarInlineViewModel
+                {
+                    ServiceName = "-",
+                    LicensePlate = "Авто-номер не распознан",
+                    Date = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                    Talon = "-"
+                };
+
+                if (_mainForm.InvokeRequired)
+                {
+                    _mainForm.Invoke(new Action(() => AddCarToQueue(unknownCar, isStandart)));
+                }
+                else
+                {
+                    AddCarToQueue(unknownCar, isStandart);
+                }
+
+                MessageBox.Show("Авто-номер не распознан");
+                return;
+            }
+
+            var serviceId = isStandart
+                ? ConfigurationManager.AppSettings["ServiceIdStd"]
+                : ConfigurationManager.AppSettings["ServiceIdTec"];
+
+            var serverUrl = ConfigurationManager.AppSettings["ServerUrl"];
+            var requestUri = new Uri(serverUrl);
+
+            using (var httpClient = new HttpClient())
+            {
+                // Define the request content as JSON
+                var content = new StringContent(
+                    "{\"jsonrpc\": \"2.0\", \"method\": \"Поставить в очередь\", \"params\": {\"service_id\": \"" +
+                    serviceId +
+                    "\", \"text_data\": \"" + _notificationAlert.LicensePlate + "\"}}",
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                var responseFromSeo = await httpClient.PostAsync(requestUri, content);
+
+                if (responseFromSeo.IsSuccessStatusCode)
+                {
+                    var responseContent = await responseFromSeo.Content.ReadAsStringAsync();
+
+                    var desResponse = JsonConvert.DeserializeObject<ResponseEqs>(responseContent);
+                    var customer = desResponse.Result.Customer;
+
+                    var newCar = new CarInlineViewModel
+                    {
+                        ServiceName = customer.ToService.Name,
+                        LicensePlate = customer.InputData,
+                        Date = customer.StandTime,
+                        Talon = $"{customer.Prefix}{customer.Number}"
+                    };
+
+                    if (_mainForm.InvokeRequired)
+                    {
+                        _mainForm.Invoke(new Action(() => AddCarToQueue(newCar, isStandart)));
+                    }
+                    else
+                    {
+                        AddCarToQueue(newCar, isStandart);
+                    }
+
+                    _notificationAlert = null;
+
+                    // Print talon for driver in queue
+                    PrinterHelper.NewCar = newCar;
+                    PrinterHelper.Print();
+                }
+            }
+        }
+
         private async Task HandleRequest(HttpListenerContext context)
         {
             var request = context.Request;
             var response = context.Response;
-
-            if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/inline")
-            {
-                Logger.Info($"Кнопка нажата IP: {_httpListener.Prefixes.First()}!");
-                
-                var isTest = Convert.ToBoolean(ConfigurationManager.AppSettings["IsTest"]);
-
-                if (isTest)
-                {
-                    var testCar = new CarInlineViewModel
-                    {
-                        ServiceName = "Test service",
-                        LicensePlate = "1KG123AAA",
-                        Date = DateTime.Now.ToString(CultureInfo.InvariantCulture),
-                        Talon = "A1"
-                    };
-
-                    if (_mainForm.InvokeRequired)
-                    {
-                        _mainForm.Invoke(new Action(() => AddCarToQueue(testCar)));
-                    }
-                    else
-                    {
-                        AddCarToQueue(testCar);
-                    }
-
-                    ResponseClose(response, "OK");
-                    return;
-                }
-
-                if (_notificationAlert is null)
-                {
-                    ResponseClose(response, "Номеров нету, на очередь!");
-                    return;
-                }
-
-                if (_notificationAlert.LicensePlate is "unknown" && _notificationAlert.DateTime == null)
-                {
-                    var unknownCar = new CarInlineViewModel
-                    {
-                        ServiceName = "-",
-                        LicensePlate = "Авто-номер не распознан",
-                        Date = DateTime.Now.ToString(CultureInfo.InvariantCulture),
-                        Talon = "-"
-                    };
-                    
-                    if (_mainForm.InvokeRequired)
-                    {
-                        _mainForm.Invoke(new Action(() => AddCarToQueue(unknownCar)));
-                    }
-                    else
-                    {
-                        AddCarToQueue(unknownCar);
-                    }
-                    
-                    ResponseClose(response, "Авто-номер не распознан");
-                    return;
-                }
-
-                var serviceId = isStandart() 
-                    ? ConfigurationManager.AppSettings["ServiceIdStd"] 
-                    : ConfigurationManager.AppSettings["ServiceIdTec"];
-                
-                var serverUrl = ConfigurationManager.AppSettings["ServerUrl"];
-                var requestUri = new Uri(serverUrl);
-
-                using (var httpClient = new HttpClient())
-                {
-                    // Define the request content as JSON
-                    var content = new StringContent(
-                        "{\"jsonrpc\": \"2.0\", \"method\": \"Поставить в очередь\", \"params\": {\"service_id\": \"" +
-                        serviceId +
-                        "\", \"text_data\": \"" + _notificationAlert.LicensePlate + "\"}}",
-                        Encoding.UTF8,
-                        "application/json"
-                    );
-
-                    var responseFromSeo = await httpClient.PostAsync(requestUri, content);
-
-                    if (responseFromSeo.IsSuccessStatusCode)
-                    {
-                        var responseContent = await responseFromSeo.Content.ReadAsStringAsync();
-
-                        var desResponse = JsonConvert.DeserializeObject<ResponseEqs>(responseContent);
-                        var customer = desResponse.Result.Customer;
-
-                        var newCar = new CarInlineViewModel
-                        {
-                            ServiceName = customer.ToService.Name,
-                            LicensePlate = customer.InputData,
-                            Date = customer.StandTime,
-                            Talon = $"{customer.Prefix}{customer.Number}"
-                        };
-
-                        if (_mainForm.InvokeRequired)
-                        {
-                            _mainForm.Invoke(new Action(() => AddCarToQueue(newCar)));
-                        }
-                        else
-                        {
-                            AddCarToQueue(newCar);
-                        }
-
-                        _notificationAlert = null;
-
-                        // Print talon for driver in queue
-                        PrinterHelper.NewCar = newCar;
-                        PrinterHelper.Print();
-                    }
-                }
-
-                ResponseClose(response, "OK");
-                return;
-            }
 
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/anpr/event")
             {
@@ -194,7 +190,7 @@ namespace WinAnprSqe.Server
                         ResponseClose(response, "Нету xml документа!");
                         return;
                     }
-                    
+
                     var xdoc = XDocument.Parse(xmlData);
 
                     var eventType = (string)xdoc.Root.Element("{http://www.hikvision.com/ver20/XMLSchema}eventType");
@@ -206,7 +202,7 @@ namespace WinAnprSqe.Server
                     {
                         Logger.Info($"Запрос от камеры пришел IP: {_httpListener.Prefixes.First()}!");
                         Logger.Info($"Данные из xml: {eventType}, {dateTime}, {licensePlate}");
-                        
+
                         _notificationAlert = licensePlate is "unknown"
                             ? new EventNotificationAlert
                             {
@@ -261,16 +257,16 @@ namespace WinAnprSqe.Server
             response.Close();
         }
 
-        private void AddCarToQueue(CarInlineViewModel newCar)
+        private void AddCarToQueue(CarInlineViewModel newCar, bool isStandart)
         {
-            Logger.Error($"Машина добавлена стандартный - {isStandart()}: {_httpListener.Prefixes.First()}");
-            
-            if (isStandart())
+            if (isStandart)
             {
                 _mainForm?.CarsStandart.Insert(0, newCar);
 
                 if (_mainForm?.CarsStandart != null && _mainForm?.CarsStandart.Count > 50)
                     _mainForm.CarsStandart.RemoveAt(_mainForm.CarsStandart.Count - 1);
+
+                Logger.Info($"Машина добавлена в Standart");
             }
             else
             {
@@ -278,12 +274,9 @@ namespace WinAnprSqe.Server
 
                 if (_mainForm?.CarsTec != null && _mainForm?.CarsTec.Count > 50)
                     _mainForm.CarsTec.RemoveAt(_mainForm.CarsTec.Count - 1);
-            }
-        }
 
-        private bool isStandart()
-        {
-            return _httpListener.Prefixes.First() == ConfigurationManager.AppSettings["ApiUrlStandart"];
+                Logger.Info($"Машина добавлена в VIP");
+            }
         }
 
         #endregion
